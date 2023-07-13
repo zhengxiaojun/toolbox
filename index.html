@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<title>在线笔记</title>
+		<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+	</head>
+	<body>
+		<div id="app">
+			<el-row>
+				<el-col :span="12">
+					<el-row>
+						<el-main>
+							<el-form :model="noteForm" label-width="auto">
+								<el-form-item label="标题">
+									<el-input v-model="noteForm.title"></el-input>
+								</el-form-item>
+								<el-form-item label="内容">
+									<el-input type="textarea" v-model="noteForm.content"></el-input>
+								</el-form-item>
+								<el-form-item>
+									<el-button size="mini" type="primary" @click.prevent="addNote">添加</el-button>
+									<el-button size="mini" type="primary" @click.prevent="updateNote">更新</el-button>
+								</el-form-item>
+							</el-form>
+						</el-main>
+					</el-row>
+					<el-row>
+						<el-main>
+							<el-table :data="notes" style="width: 100%">
+								<el-table-column prop="title" label="标题">
+									<template slot-scope="scope">
+										<el-button type="text" size="small" @click="showContent(scope.$index)">
+											{{ scope.row.title }}
+										</el-button>
+									</template>
+								</el-table-column>
+								<el-table-column label="操作">
+									<template slot-scope="scope">
+										<el-button type="text" size="small" @click="deleteNote(scope.$index)">
+											删除
+										</el-button>
+									</template>
+								</el-table-column>
+							</el-table>
+						</el-main>
+					</el-row>
+				</el-col>
+				<el-col :span="12">
+					<el-main>
+						<el-card>
+							<h2>{{ noteForm.title }}</h2>
+							<p>{{ noteForm.content }}</p>
+						</el-card>
+					</el-main>
+				</el-col>
+			</el-row>
+		</div>
+
+		<script src="./js/vue/2.6.10/vue.js"></script>
+		<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+		<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.2/dist/FileSaver.min.js"></script>
+
+		<script>			
+			new Vue({
+				el: '#app',
+				data: {
+					currentIndex: null,
+					notes: [],
+					noteForm: {
+						title: '',
+						content: ''
+					}
+				},
+				mounted() {
+					this.loadNotes();
+				},
+				methods: {
+					loadNotes() {
+						axios.get('data/data.json')
+							.then(response => {
+								console.log(response)
+								this.notes = response.data;
+							})
+							.catch(error => {
+								console.error(error);
+							});
+					},
+					saveNotes() {
+						// service.post('save', this.notes)
+						// 	.then(response => {
+						// 		console.log('Notes saved successfully');
+						// 	})
+						// 	.catch(error => {
+						// 		console.error(error);
+						// 	});
+					},
+					exportNote() {
+						const blob = new Blob([this.notes], {
+							type: 'application/text;charset=utf-8'
+						});
+						saveAs(blob, 'data.json');
+					},
+					addNote() {
+						this.notes.push({
+							title: this.noteForm.title,
+							content: this.noteForm.content
+						});
+						this.noteForm.title = '';
+						this.noteForm.content = '';
+
+						console.log(this.notes)
+						this.saveNotes();
+					},
+					updateNote(noteForm) {
+						console.log(this.notes)
+						console.log(this.currentIndex)
+						this.notes[this.currentIndex].title = this.noteForm.title;
+						this.notes[this.currentIndex].content = this.noteForm.content;
+						this.noteForm.title = '';
+						this.noteForm.content = '';
+
+						this.saveNotes();
+					},
+					deleteNote(index) {
+						this.notes.splice(index, 1);
+						this.saveNotes();
+					},
+					showContent(index) {
+						this.currentIndex = index;
+						this.noteForm.title = this.notes[index].title;
+						this.noteForm.content = this.notes[index].content;
+					}
+				}
+			});
+		</script>
+	</body>
+</html>
